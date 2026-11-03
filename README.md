@@ -92,6 +92,8 @@ docker compose -f compose.production.yml down
 
 Jangan menjalankan systemd service Node dan container secara bersamaan karena keduanya akan menggunakan port `3130`.
 
+Jika server memakai runtime container terbatas, Compose ini sengaja tidak menggunakan `init: true`. NestJS sudah mengaktifkan shutdown hooks sehingga container tetap dapat menerima sinyal berhenti secara langsung tanpa `/sbin/docker-init`.
+
 ## Quality checks
 
 ```bash
