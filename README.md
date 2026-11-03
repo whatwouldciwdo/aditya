@@ -7,6 +7,15 @@ Monorepo aplikasi operasional ADITYA. Aplikasi tidak menggunakan autentikasi; ak
 - Web: `http://localhost:3130/`
 - API health: `http://localhost:3130/api/health`
 - API readiness: `http://localhost:3130/api/ready`
+- Gas Mix: `POST http://localhost:3130/api/calculations/gas-mix`
+
+## Status implementasi PRD
+
+- Tahap 1 — Gas Mix `GAS-01`–`GAS-04`: kalkulasi real-time, validasi input,
+  output BBTUD/MW, calculation engine terpisah, dan endpoint API versi formula.
+- Tahap berikutnya — `GAS-05`: kirim hasil Gas Mix sebagai data awal Evaluasi.
+- Formula tahap 1 masih berstatus karakterisasi baseline dan wajib melalui sign-off
+  Engineer serta golden dataset sebelum digunakan sebagai formula resmi produksi.
 
 NestJS/Fastify melayani hasil build React pada `/` dan API pada `/api` melalui satu port `3130`.
 

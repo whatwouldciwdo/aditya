@@ -10,7 +10,9 @@
     "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
+    "@aditya/calculation-engine": "workspace:*",
     "@aditya/shared-types": "workspace:*",
+    "@aditya/validation": "workspace:*",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },

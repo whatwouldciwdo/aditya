@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { calculateLegacyGasTotal, getLegacyPgnEnergy } from "./gas.js";
+import {
+  calculateLegacyGasMix,
+  calculateLegacyGasTotal,
+  getLegacyPgnEnergy,
+} from "./gas.js";
 
 describe("legacy gas characterization", () => {
   it.each([
@@ -23,5 +27,15 @@ describe("legacy gas characterization", () => {
 
   it("rejects non-finite load", () => {
     expect(() => calculateLegacyGasTotal(Number.NaN)).toThrow(TypeError);
+  });
+
+  it("calculates every Gas Mix output from the effective baseline", () => {
+    const result = calculateLegacyGasMix(100, 2);
+    expect(result.totalGasBbtud).toBeCloseTo(32.059, 10);
+    expect(result.pheBbtud).toBeCloseTo(3.941, 10);
+    expect(result.pgnBbtud).toBe(28.118);
+    expect(result.gtNetMw).toBe(92);
+    expect(result.stNetMw).toBeCloseTo(56.673, 10);
+    expect(result.totalNetMw).toBeCloseTo(148.673, 10);
   });
 });

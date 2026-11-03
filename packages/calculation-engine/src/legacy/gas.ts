@@ -1,5 +1,14 @@
 export type FgcCount = 0 | 1 | 2 | 3 | 4;
 
+export interface LegacyGasMixResult {
+  totalGasBbtud: number;
+  pheBbtud: number;
+  pgnBbtud: number;
+  gtNetMw: number;
+  stNetMw: number;
+  totalNetMw: number;
+}
+
 const PGN_ENERGY_BY_FGC: Readonly<Record<FgcCount, number>> = {
   0: 0,
   1: 14.67,
@@ -20,4 +29,24 @@ export function calculateLegacyGasTotal(loadMw: number): number {
 /** Characterization of the current HTML baseline; not an approved engineering formula. */
 export function getLegacyPgnEnergy(fgcCount: FgcCount): number {
   return PGN_ENERGY_BY_FGC[fgcCount];
+}
+
+/** Characterization of the current HTML baseline; not an approved engineering formula. */
+export function calculateLegacyGasMix(
+  loadMw: number,
+  fgcCount: FgcCount,
+): LegacyGasMixResult {
+  const totalGasBbtud = calculateLegacyGasTotal(loadMw);
+  const pgnBbtud = getLegacyPgnEnergy(fgcCount);
+  const gtNetMw = loadMw - 8;
+  const stNetMw = 0.4639 * loadMw + 10.283;
+
+  return {
+    totalGasBbtud,
+    pheBbtud: totalGasBbtud - pgnBbtud,
+    pgnBbtud,
+    gtNetMw,
+    stNetMw,
+    totalNetMw: gtNetMw + stNetMw,
+  };
 }
