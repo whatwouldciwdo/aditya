@@ -9,6 +9,9 @@
     "test": "vitest run src",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
+  "dependencies": {
+    "@aditya/shared-types": "workspace:*"
+  },
   "devDependencies": {
     "typescript": "7.0.2"
   }

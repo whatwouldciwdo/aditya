@@ -38,4 +38,44 @@ describe("CalculationsController", () => {
       }
     },
   );
+
+  it("returns versioned evaluation metrics with source traceability", () => {
+    const result = controller.calculateEvaluation({
+      operationDate: "2026-03-11",
+      mode: "COMBINED",
+      loadMw: 100,
+      fgcCount: 2,
+      predictedGasBbtud: 100,
+      actualGasBbtud: 110,
+      predictionSource: {
+        type: "GAS_MIX",
+        formulaVersion: "legacy-characterization-v1",
+      },
+    });
+
+    expect(result.absoluteErrorBbtud).toBe(10);
+    expect(result.correctionFactor).toBe(1.1);
+    expect(result.input.predictionSource).toEqual({
+      type: "GAS_MIX",
+      formulaVersion: "legacy-characterization-v1",
+    });
+    expect(result.formulaVersion).toBe("legacy-evaluation-characterization-v1");
+  });
+
+  it.each(["predictedGasBbtud", "actualGasBbtud"])(
+    "rejects a zero %s for ratio metrics",
+    (field) => {
+      expect(() =>
+        controller.calculateEvaluation({
+          operationDate: "2026-03-11",
+          mode: "OPEN",
+          loadMw: 100,
+          fgcCount: 0,
+          predictedGasBbtud: 100,
+          actualGasBbtud: 100,
+          [field]: 0,
+        }),
+      ).toThrow(UnprocessableEntityException);
+    },
+  );
 });

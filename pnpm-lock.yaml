@@ -257,6 +257,10 @@ importers:
         version: 8.3.5(@types/node@24.10.0)(esbuild@0.27.7)(tsx@4.21.0)
 
   packages/calculation-engine:
+    dependencies:
+      '@aditya/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
     devDependencies:
       typescript:
         specifier: 7.0.2

@@ -8,12 +8,15 @@ Monorepo aplikasi operasional ADITYA. Aplikasi tidak menggunakan autentikasi; ak
 - API health: `http://localhost:3130/api/health`
 - API readiness: `http://localhost:3130/api/ready`
 - Gas Mix: `POST http://localhost:3130/api/calculations/gas-mix`
+- Evaluasi: `POST http://localhost:3130/api/calculations/evaluation`
 
 ## Status implementasi PRD
 
-- Tahap 1 — Gas Mix `GAS-01`–`GAS-04`: kalkulasi real-time, validasi input,
+- Tahap 1 — Gas Mix `GAS-01`–`GAS-05`: kalkulasi real-time, validasi input,
   output BBTUD/MW, calculation engine terpisah, dan endpoint API versi formula.
-- Tahap berikutnya — `GAS-05`: kirim hasil Gas Mix sebagai data awal Evaluasi.
+- Tahap 2 — Evaluasi `EVAL-01`–`EVAL-04`: transfer sumber prediksi Gas Mix,
+  input realisasi, validasi rasio, dan metrik evaluasi interaktif. Persistence
+  riwayat server dimulai pada `EVAL-05` dan belum termasuk tahap ini.
 - Formula tahap 1 masih berstatus karakterisasi baseline dan wajib melalui sign-off
   Engineer serta golden dataset sebelum digunakan sebagai formula resmi produksi.
 

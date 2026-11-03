@@ -6,14 +6,38 @@ import {
 } from "@nestjs/common";
 import {
   calculateLegacyGasMix,
+  calculateLegacyEvaluation,
   LEGACY_FORMULA_VERSION,
   type FgcCount,
 } from "@aditya/calculation-engine";
-import type { ApiErrorResponse, GasMixResult } from "@aditya/shared-types";
-import { gasMixInputSchema } from "@aditya/validation";
+import type {
+  ApiErrorResponse,
+  EvaluationResult,
+  GasMixResult,
+} from "@aditya/shared-types";
+import { evaluationInputSchema, gasMixInputSchema } from "@aditya/validation";
 
 @Controller("calculations")
 export class CalculationsController {
+  @Post("evaluation")
+  calculateEvaluation(@Body() body: unknown): EvaluationResult {
+    const parsed = evaluationInputSchema.safeParse(body);
+
+    if (!parsed.success) {
+      const response: ApiErrorResponse = {
+        code: "VALIDATION_ERROR",
+        message: "Input Evaluasi tidak valid.",
+        fieldErrors: parsed.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      };
+      throw new UnprocessableEntityException(response);
+    }
+
+    return calculateLegacyEvaluation(parsed.data);
+  }
+
   @Post("gas-mix")
   calculateGasMix(@Body() body: unknown): GasMixResult {
     const parsed = gasMixInputSchema.safeParse(body);

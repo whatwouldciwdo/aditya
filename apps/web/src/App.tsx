@@ -1,11 +1,16 @@
 import { useMemo, useState, type FormEvent } from "react";
 import {
+  calculateLegacyEvaluation,
   calculateLegacyGasMix,
   LEGACY_FORMULA_VERSION,
   type FgcCount,
 } from "@aditya/calculation-engine";
-import type { GasMixResult } from "@aditya/shared-types";
-import { gasMixInputSchema } from "@aditya/validation";
+import type {
+  EvaluationInput,
+  EvaluationResult,
+  GasMixResult,
+} from "@aditya/shared-types";
+import { evaluationInputSchema, gasMixInputSchema } from "@aditya/validation";
 
 const modules = [
   "Gas Mix",
@@ -56,6 +61,16 @@ export function App() {
   const [requestState, setRequestState] = useState<
     "idle" | "loading" | "error"
   >("idle");
+  const [operationDate, setOperationDate] = useState(
+    new Date().toISOString().slice(0, 10),
+  );
+  const [mode, setMode] = useState<"OPEN" | "COMBINED">("COMBINED");
+  const [actualGas, setActualGas] = useState("");
+  const [evaluationResult, setEvaluationResult] =
+    useState<EvaluationResult | null>(null);
+  const [evaluationErrors, setEvaluationErrors] = useState<
+    Record<string, string>
+  >({});
   const liveResult = useMemo(
     () => calculateLocally(loadMw, fgcCount),
     [loadMw, fgcCount],
@@ -111,6 +126,74 @@ export function App() {
     }
   }
 
+  function sendToEvaluation() {
+    if (!result) return;
+    setServerResult(result);
+    setEvaluationResult(null);
+    setEvaluationErrors({});
+    document
+      .getElementById("evaluation")
+      ?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function evaluate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!result) return;
+    const input = {
+      operationDate,
+      mode,
+      loadMw: result.input.loadMw,
+      fgcCount: result.input.fgcCount,
+      predictedGasBbtud: result.totalGasBbtud,
+      actualGasBbtud: fieldNumber(actualGas),
+      predictedPheBbtud: result.pheBbtud,
+      predictedPgnBbtud: result.pgnBbtud,
+      predictedNetMw: result.totalNetMw,
+      predictionSource: {
+        type: "GAS_MIX" as const,
+        formulaVersion: result.formulaVersion,
+      },
+    };
+    const parsed = evaluationInputSchema.safeParse(input);
+    if (!parsed.success) {
+      setEvaluationErrors(
+        Object.fromEntries(
+          parsed.error.issues.map((issue) => [
+            String(issue.path[0]),
+            issue.message,
+          ]),
+        ),
+      );
+      setEvaluationResult(null);
+      return;
+    }
+    setEvaluationErrors({});
+    const evaluationInput: EvaluationInput = {
+      operationDate: parsed.data.operationDate,
+      mode: parsed.data.mode,
+      loadMw: parsed.data.loadMw,
+      fgcCount: parsed.data.fgcCount,
+      predictedGasBbtud: parsed.data.predictedGasBbtud,
+      actualGasBbtud: parsed.data.actualGasBbtud,
+    };
+    const optionalKeys = [
+      "predictedPheBbtud",
+      "actualPheBbtud",
+      "predictedPgnBbtud",
+      "actualPgnBbtud",
+      "predictedNetMw",
+      "actualNetMw",
+      "predictionSource",
+    ] as const;
+    for (const key of optionalKeys) {
+      const value = parsed.data[key];
+      if (value !== undefined) {
+        Object.assign(evaluationInput, { [key]: value });
+      }
+    }
+    setEvaluationResult(calculateLegacyEvaluation(evaluationInput));
+  }
+
   return (
     <div className="app-shell">
       <header>
@@ -121,6 +204,7 @@ export function App() {
         </div>
         <nav aria-label="Navigasi utama">
           <a href="#gas-mix">Kalkulator</a>
+          <a href="#evaluation">Evaluasi</a>
           <a href="#modules">Modul</a>
         </nav>
       </header>
@@ -232,6 +316,121 @@ export function App() {
                 </article>
               ))}
             </div>
+            <button
+              className="secondary-action"
+              type="button"
+              onClick={sendToEvaluation}
+              disabled={!result}
+            >
+              Kirim hasil ke Evaluasi
+            </button>
+          </div>
+        </section>
+
+        <section id="evaluation" aria-labelledby="evaluation-title">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">EVALUASI PREDIKSI</span>
+              <h2 id="evaluation-title">Prediksi vs realisasi gas</h2>
+            </div>
+            <span className="muted">Sumber: hasil Gas Mix aktif</span>
+          </div>
+          <div className="calculator-layout evaluation-layout">
+            <form className="calculator-form" onSubmit={evaluate} noValidate>
+              <label htmlFor="operation-date">Tanggal operasi</label>
+              <input
+                id="operation-date"
+                type="date"
+                value={operationDate}
+                onChange={(event) => setOperationDate(event.target.value)}
+              />
+              <label htmlFor="operation-mode">Mode operasi</label>
+              <select
+                id="operation-mode"
+                value={mode}
+                onChange={(event) =>
+                  setMode(event.target.value as "OPEN" | "COMBINED")
+                }
+              >
+                <option value="COMBINED">Combined Cycle</option>
+                <option value="OPEN">Open Cycle</option>
+              </select>
+              <label htmlFor="predicted-gas">
+                Prediksi total gas <span>BBTUD</span>
+              </label>
+              <input
+                id="predicted-gas"
+                value={result ? String(result.totalGasBbtud) : ""}
+                readOnly
+              />
+              <label htmlFor="actual-gas">
+                Realisasi total gas <span>BBTUD</span>
+              </label>
+              <input
+                id="actual-gas"
+                type="number"
+                min="0"
+                step="0.001"
+                value={actualGas}
+                onChange={(event) => setActualGas(event.target.value)}
+                aria-invalid={Boolean(evaluationErrors.actualGasBbtud)}
+              />
+              {evaluationErrors.actualGasBbtud && (
+                <p className="field-error" role="alert">
+                  {evaluationErrors.actualGasBbtud}
+                </p>
+              )}
+              {!result && (
+                <p className="request-error">
+                  Isi Gas Mix valid terlebih dahulu.
+                </p>
+              )}
+              <button type="submit" disabled={!result}>
+                Hitung evaluasi
+              </button>
+            </form>
+            <div className="result-panel">
+              <div className="result-grid evaluation-metrics">
+                {(
+                  [
+                    [
+                      "Selisih absolut",
+                      evaluationResult?.absoluteErrorBbtud,
+                      "BBTUD",
+                    ],
+                    ["Deviasi", evaluationResult?.deviationPercent, "%"],
+                    [
+                      "Tingkat kesesuaian",
+                      evaluationResult?.accuracyPercent,
+                      "%",
+                    ],
+                    [
+                      "Correction factor",
+                      evaluationResult?.correctionFactor,
+                      "rasio",
+                    ],
+                    ["Signed bias", evaluationResult?.signedBiasPercent, "%"],
+                  ] as ResultMetric[]
+                ).map(([label, value, unit]) => (
+                  <article key={label}>
+                    <span>{label}</span>
+                    <strong>
+                      {typeof value === "number"
+                        ? numberFormat.format(value)
+                        : "—"}
+                    </strong>
+                    <small>{unit}</small>
+                  </article>
+                ))}
+              </div>
+              <p className="source-note">
+                Referensi prediksi:{" "}
+                {result
+                  ? `Gas Mix · ${result.formulaVersion}`
+                  : "belum tersedia"}
+                . Hasil tahap ini belum disimpan ke server.
+              </p>
+            </div>
           </div>
         </section>
 
@@ -247,7 +446,7 @@ export function App() {
             {modules.map((name, index) => (
               <article
                 key={name}
-                className={index === 0 ? "active-module" : ""}
+                className={index === 0 || index === 5 ? "active-module" : ""}
               >
                 <span className="number">
                   {String(index + 1).padStart(2, "0")}
@@ -255,11 +454,15 @@ export function App() {
                 <h3>{name}</h3>
                 <p>
                   {index === 0
-                    ? "GAS-01 hingga GAS-04 tersedia untuk pengujian awal."
-                    : "Fondasi modul siap untuk implementasi requirement berikutnya."}
+                    ? "GAS-01 hingga GAS-05 tersedia untuk pengujian awal."
+                    : index === 5
+                      ? "EVAL-01 hingga EVAL-04 tersedia untuk evaluasi interaktif."
+                      : "Fondasi modul siap untuk implementasi requirement berikutnya."}
                 </p>
                 <span className="coming">
-                  {index === 0 ? "Tahap aktif" : "Dalam pengembangan"}
+                  {index === 0 || index === 5
+                    ? "Tahap aktif"
+                    : "Dalam pengembangan"}
                 </span>
               </article>
             ))}
