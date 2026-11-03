@@ -105,6 +105,95 @@ export interface EvaluationResult {
   formulaVersion: string;
 }
 
+export interface SimulationInput {
+  mode: OperationMode;
+  nominationPheBbtud?: number;
+  nominationPgnBbtud?: number;
+  initialLinepack: number;
+  flowInPhe: number;
+  rows: Array<{ loadMw: number; fgcCount: 0 | 1 | 2 | 3 | 4 }>;
+}
+export interface SimulationResult {
+  input: SimulationInput;
+  rows: Array<
+    SimulationInput["rows"][number] & {
+      slot: string;
+      gtNetMw: number;
+      stNetMw: number;
+      totalNetMw: number;
+      pheBbtud: number;
+      pgnBbtud: number;
+      totalGasBbtud: number;
+      linepack: number;
+      flowPhe: number;
+      flowPgn: number;
+    }
+  >;
+  averagePheBbtud: number;
+  averagePgnBbtud: number;
+  averageTotalGasBbtud: number;
+  totalProductionMw: number;
+  nominationWarnings: { phe: boolean; pgn: boolean };
+}
+export interface RohInput {
+  ownUseUnit: "GT11" | "GT12";
+  rows: Array<{
+    gt11OpenMw: number;
+    gt12OpenMw: number;
+    stMw: number;
+    gt11CombinedMw: number;
+    gt12CombinedMw: number;
+    fgcCount: 0 | 1 | 2 | 3 | 4;
+  }>;
+}
+export interface RohResult {
+  input: RohInput;
+  rows: Array<
+    RohInput["rows"][number] & {
+      slot: string;
+      totalLoadMw: number;
+      pheBbtud: number;
+      pgnBbtud: number;
+      totalGasBbtud: number;
+    }
+  >;
+  averagePheBbtud: number;
+  averagePgnBbtud: number;
+  averageTotalGasBbtud: number;
+}
+export interface NominationInput {
+  submissionDate: string;
+  effectiveDate: string;
+  deliveryPoint: string;
+  receiptPoint: string;
+  dailySwapBbtud: number;
+  dailyStockBbtud: number;
+  rows: Array<{ swapBbtud: number; stockBbtud: number }>;
+}
+export interface NominationResult {
+  input: NominationInput;
+  rows: Array<
+    NominationInput["rows"][number] & { slot: string; totalBbtud: number }
+  >;
+  dailyTotalBbtud: number;
+  averageSwapBbtud: number;
+  averageStockBbtud: number;
+  averageTotalBbtud: number;
+}
+export interface EvaluationHistoryRecord {
+  id: string;
+  createdAt: string;
+  input: EvaluationInput;
+  result: EvaluationResult;
+}
+export interface LearningResult {
+  sampleCount: number;
+  averageDeviationPercent: number | null;
+  learningFactor: number | null;
+  recommendedGasBbtud: number | null;
+  confidence: "NONE" | "LOW" | "MEDIUM" | "HIGH";
+}
+
 export interface ApiFieldError {
   field: string;
   message: string;

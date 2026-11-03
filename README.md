@@ -23,6 +23,40 @@ Monorepo aplikasi operasional ADITYA. Aplikasi tidak menggunakan autentikasi; ak
 - Formula tahap 1 masih berstatus karakterisasi baseline dan wajib melalui sign-off
   Engineer serta golden dataset sebelum digunakan sebagai formula resmi produksi.
 
+### Workspace operasional
+
+Antarmuka web sekarang menyediakan navigasi terintegrasi untuk:
+
+- **Simulasi Energi** — proyeksi 24 jam untuk mode combined/open cycle, konsumsi
+  PHE/PGN, flow, linepack, peringatan nominasi, dan fill-right input per slot.
+- **ROH** — rencana operasi harian per unit, pemakaian sendiri, FGC, beban total,
+  serta proyeksi gas per jam.
+- **Nominasi PGN** — metadata pengajuan, daily swap/stock, dan forecast 24 jam.
+- **Evaluasi & Learning** — deviasi prediksi/realisasi dan faktor rekomendasi dari
+  sampel historis dengan kondisi operasi serupa.
+- **Kalkulator Tanki** — formula RWT/MWT terversi tetap tersedia pada calculation
+  engine dan endpoint `POST /api/calculations/tank`.
+- **Activity Log** — log aktivitas lokal yang hanya mencatat waktu, modul, jenis
+  aksi, dan ringkasan non-sensitif. Identitas pengguna, IP, user-agent, dan payload
+  input detail tidak dicatat.
+
+Simulasi, ROH, nominasi, evaluasi, dan activity log mendukung ekspor CSV, Excel,
+serta PDF melalui print stylesheet. Pada tahap ini histori Evaluasi & Learning dan
+Activity Log disimpan pada `localStorage` browser; skema PostgreSQL yang tersedia
+belum dihubungkan sebagai repository persistensi untuk workspace baru tersebut.
+Formula migrasi dipertahankan sebagai baseline terkarakterisasi dan tetap memerlukan
+sign-off Engineer/golden dataset sebelum menjadi acuan produksi resmi.
+
+Landing page menampilkan card untuk setiap workspace. Card membuka halaman mandiri
+di tab baru melalui route `/workspace/{nama-workspace}`. Integrasi data Simulasi
+Energi telah disiapkan untuk Energi PGN dari kolom G sheet `Data Penyaluran Gas PGN
+
+- IP PLTGU Cilegon`, Energi PHE dari kolom P, dan trend linepack dari kolom T sheet
+`GMS Monitoring Gas Delivery November 2026`. URL dan mekanisme akses Google Sheet
+masih menunggu link/izin sumber. Selama belum terhubung, nilai tetap dapat dimasukkan
+manual. Web menampilkan dialog peringatan jika trend linepack mencapai atau turun di
+bawah `650 psi`.
+
 NestJS/Fastify melayani hasil build React pada `/` dan API pada `/api` melalui satu port `3130`.
 
 ## Development lokal
