@@ -18,7 +18,6 @@ export function App() {
           <h1>ADITYA</h1>
           <p>Advanced Digital Integrated Turbine &amp; Energy Analytics</p>
         </div>
-        <span className="network-badge">Jaringan internal · tanpa login</span>
       </header>
       <main>
         <section className="hero">
@@ -66,7 +65,7 @@ export function App() {
           </div>
         </section>
       </main>
-      <footer>Decision-support tool · bukan pengendali peralatan</footer>
+      <footer>ADITYA Credits 2026</footer>
     </div>
   );
 }

@@ -49,7 +49,6 @@ header p {
   font-weight: 800;
   letter-spacing: 0.17em;
 }
-.network-badge,
 .coming {
   border: 1px solid #376052;
   border-radius: 100px;
@@ -158,9 +157,6 @@ footer {
   header {
     align-items: flex-start;
     gap: 20px;
-  }
-  .network-badge {
-    white-space: nowrap;
   }
 }
 @media (max-width: 560px) {
