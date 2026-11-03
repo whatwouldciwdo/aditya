@@ -78,4 +78,26 @@ describe("CalculationsController", () => {
       ).toThrow(UnprocessableEntityException);
     },
   );
+
+  it("returns a versioned tank conversion with master parameters", () => {
+    const result = controller.calculateTank({
+      tankCode: "RWT",
+      inputType: "LEVEL",
+      value: 11.445,
+    });
+    expect(result.status).toBe("CRITICAL");
+    expect(result.overflowWarning).toBe(true);
+    expect(result.definition.oflM).toBe(11.445);
+    expect(result.formulaVersion).toBe("legacy-tank-characterization-v1");
+  });
+
+  it("rejects negative tank input explicitly", () => {
+    expect(() =>
+      controller.calculateTank({
+        tankCode: "MWT",
+        inputType: "VOLUME",
+        value: -1,
+      }),
+    ).toThrow(UnprocessableEntityException);
+  });
 });

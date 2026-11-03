@@ -24,6 +24,52 @@ export interface GasMixResult {
   formulaVersion: string;
 }
 
+export const TANK_CODES = ["RWT", "MWT"] as const;
+export const TANK_INPUT_TYPES = ["LEVEL", "VOLUME"] as const;
+export const TANK_STATUSES = [
+  "NORMAL",
+  "NWL",
+  "HIGH",
+  "WARNING",
+  "CRITICAL",
+] as const;
+
+export type TankCode = (typeof TANK_CODES)[number];
+export type TankInputType = (typeof TANK_INPUT_TYPES)[number];
+export type TankStatus = (typeof TANK_STATUSES)[number];
+
+export interface TankCalculationInput {
+  tankCode: TankCode;
+  inputType: TankInputType;
+  value: number;
+}
+
+export interface TankDefinition {
+  tankCode: TankCode;
+  name: string;
+  nwlM: number;
+  hwiM: number;
+  oflM: number;
+  capacityNwlM3: number;
+  factorM3PerM: number;
+  nwlToleranceM: number;
+  parameterVersion: string;
+}
+
+export interface TankCalculationResult {
+  input: TankCalculationInput;
+  definition: TankDefinition;
+  levelM: number;
+  levelMm: number;
+  volumeM3: number;
+  volumeLiter: number;
+  capacityPercent: number;
+  oflPercent: number;
+  status: TankStatus;
+  overflowWarning: boolean;
+  formulaVersion: string;
+}
+
 export const OPERATION_MODES = ["OPEN", "COMBINED"] as const;
 
 export type OperationMode = (typeof OPERATION_MODES)[number];

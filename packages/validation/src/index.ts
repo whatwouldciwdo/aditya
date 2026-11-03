@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { DOCUMENT_STATUSES, OPERATION_MODES } from "@aditya/shared-types";
+import {
+  DOCUMENT_STATUSES,
+  OPERATION_MODES,
+  TANK_CODES,
+  TANK_INPUT_TYPES,
+} from "@aditya/shared-types";
 
 export const documentStatusSchema = z.enum(DOCUMENT_STATUSES);
 
@@ -17,6 +22,17 @@ export const gasMixInputSchema = z.object({
 });
 
 export type GasMixInput = z.infer<typeof gasMixInputSchema>;
+
+export const tankCalculationInputSchema = z.object({
+  tankCode: z.enum(TANK_CODES, { error: "Jenis tanki tidak valid." }),
+  inputType: z.enum(TANK_INPUT_TYPES, { error: "Jenis input tidak valid." }),
+  value: z
+    .number({ error: "Nilai harus berupa angka." })
+    .finite("Nilai harus berupa angka finite.")
+    .nonnegative("Nilai tidak boleh negatif."),
+}) satisfies z.ZodType<import("@aditya/shared-types").TankCalculationInput>;
+
+export type TankCalculationInput = z.infer<typeof tankCalculationInputSchema>;
 
 const optionalNonnegativeNumber = z
   .number({ error: "Nilai harus berupa angka." })

@@ -187,6 +187,72 @@ main {
 .evaluation-layout {
   margin-bottom: 85px;
 }
+.tank-layout {
+  margin-bottom: 85px;
+}
+.tank-markers {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #9fcdbb;
+  font-size: 0.78rem;
+}
+.tank-gauge {
+  height: 18px;
+  overflow: hidden;
+  margin: 14px 0 24px;
+  border: 1px solid #376052;
+  border-radius: 999px;
+  background: #07110f;
+}
+.tank-gauge-fill {
+  display: block;
+  height: 100%;
+  background: #65d6aa;
+  transition: width 0.2s ease;
+}
+.tank-gauge-fill.warning {
+  background: #f2b84b;
+}
+.tank-gauge-fill.critical {
+  background: #ff6f61;
+}
+.tank-metrics {
+  grid-template-columns: repeat(3, 1fr);
+}
+.tank-status {
+  margin: 18px 0 0;
+  padding: 12px;
+  border: 1px solid #376052;
+  border-radius: 8px;
+  color: #9fcdbb;
+  font-weight: 800;
+}
+.tank-status.warning {
+  color: #f2c56b;
+  border-color: #8a6a2f;
+}
+.tank-status.critical,
+.overflow-warning {
+  color: #ffad9f;
+  border-color: #99483d;
+}
+.overflow-warning {
+  padding: 12px;
+  border: 1px solid;
+  border-radius: 8px;
+  margin: 12px 0 0;
+}
+.form-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.calculator-form .reset-action {
+  background: transparent;
+  color: #65d6aa;
+  border: 1px solid #65d6aa;
+}
 .evaluation-metrics {
   grid-template-columns: repeat(3, 1fr);
 }

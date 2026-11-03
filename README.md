@@ -17,6 +17,9 @@ Monorepo aplikasi operasional ADITYA. Aplikasi tidak menggunakan autentikasi; ak
 - Tahap 2 — Evaluasi `EVAL-01`–`EVAL-04`: transfer sumber prediksi Gas Mix,
   input realisasi, validasi rasio, dan metrik evaluasi interaktif. Persistence
   riwayat server dimulai pada `EVAL-05` dan belum termasuk tahap ini.
+- Tahap 3 — Tanki `TANK-01`–`TANK-06`: konversi level-volume RWT/MWT,
+  persentase kapasitas, marker NWL/HWI/OFL, status dan warning overflow,
+  parameter baseline terversi, serta reset form tanpa mengubah master data.
 - Formula tahap 1 masih berstatus karakterisasi baseline dan wajib melalui sign-off
   Engineer serta golden dataset sebelum digunakan sebagai formula resmi produksi.
 

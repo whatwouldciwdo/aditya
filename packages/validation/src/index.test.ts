@@ -4,6 +4,7 @@ import {
   documentStatusSchema,
   evaluationInputSchema,
   gasMixInputSchema,
+  tankCalculationInputSchema,
 } from "./index.js";
 
 describe("documentStatusSchema", () => {
@@ -17,6 +18,28 @@ describe("documentStatusSchema", () => {
       expect(documentStatusSchema.safeParse(status).success).toBe(false);
     },
   );
+});
+
+describe("tankCalculationInputSchema", () => {
+  it("accepts a valid tank calculation", () => {
+    expect(
+      tankCalculationInputSchema.parse({
+        tankCode: "RWT",
+        inputType: "LEVEL",
+        value: 11.295,
+      }),
+    ).toEqual({ tankCode: "RWT", inputType: "LEVEL", value: 11.295 });
+  });
+
+  it.each([
+    [{ tankCode: "OTHER", inputType: "LEVEL", value: 1 }, "tankCode"],
+    [{ tankCode: "RWT", inputType: "OTHER", value: 1 }, "inputType"],
+    [{ tankCode: "RWT", inputType: "LEVEL", value: -1 }, "value"],
+  ])("rejects invalid tank input %#", (input, field) => {
+    const result = tankCalculationInputSchema.safeParse(input);
+    expect(result.success).toBe(false);
+    if (!result.success) expect(result.error.issues[0]?.path[0]).toBe(field);
+  });
 });
 
 describe("evaluationInputSchema", () => {

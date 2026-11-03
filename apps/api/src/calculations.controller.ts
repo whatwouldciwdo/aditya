@@ -7,6 +7,7 @@ import {
 import {
   calculateLegacyGasMix,
   calculateLegacyEvaluation,
+  calculateLegacyTank,
   LEGACY_FORMULA_VERSION,
   type FgcCount,
 } from "@aditya/calculation-engine";
@@ -14,11 +15,33 @@ import type {
   ApiErrorResponse,
   EvaluationResult,
   GasMixResult,
+  TankCalculationResult,
 } from "@aditya/shared-types";
-import { evaluationInputSchema, gasMixInputSchema } from "@aditya/validation";
+import {
+  evaluationInputSchema,
+  gasMixInputSchema,
+  tankCalculationInputSchema,
+} from "@aditya/validation";
 
 @Controller("calculations")
 export class CalculationsController {
+  @Post("tank")
+  calculateTank(@Body() body: unknown): TankCalculationResult {
+    const parsed = tankCalculationInputSchema.safeParse(body);
+    if (!parsed.success) {
+      const response: ApiErrorResponse = {
+        code: "VALIDATION_ERROR",
+        message: "Input kalkulator tanki tidak valid.",
+        fieldErrors: parsed.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        })),
+      };
+      throw new UnprocessableEntityException(response);
+    }
+    return calculateLegacyTank(parsed.data);
+  }
+
   @Post("evaluation")
   calculateEvaluation(@Body() body: unknown): EvaluationResult {
     const parsed = evaluationInputSchema.safeParse(body);

@@ -2,6 +2,8 @@ import { useMemo, useState, type FormEvent } from "react";
 import {
   calculateLegacyEvaluation,
   calculateLegacyGasMix,
+  calculateLegacyTank,
+  getLegacyTankDefinition,
   LEGACY_FORMULA_VERSION,
   type FgcCount,
 } from "@aditya/calculation-engine";
@@ -9,8 +11,15 @@ import type {
   EvaluationInput,
   EvaluationResult,
   GasMixResult,
+  TankCalculationResult,
+  TankCode,
+  TankInputType,
 } from "@aditya/shared-types";
-import { evaluationInputSchema, gasMixInputSchema } from "@aditya/validation";
+import {
+  evaluationInputSchema,
+  gasMixInputSchema,
+  tankCalculationInputSchema,
+} from "@aditya/validation";
 
 const modules = [
   "Gas Mix",
@@ -71,6 +80,19 @@ export function App() {
   const [evaluationErrors, setEvaluationErrors] = useState<
     Record<string, string>
   >({});
+  const [tankCode, setTankCode] = useState<TankCode>("RWT");
+  const [tankInputType, setTankInputType] = useState<TankInputType>("LEVEL");
+  const [tankValue, setTankValue] = useState("");
+  const [tankError, setTankError] = useState("");
+  const tankDefinition = getLegacyTankDefinition(tankCode);
+  const tankResult = useMemo<TankCalculationResult | null>(() => {
+    const parsed = tankCalculationInputSchema.safeParse({
+      tankCode,
+      inputType: tankInputType,
+      value: fieldNumber(tankValue),
+    });
+    return parsed.success ? calculateLegacyTank(parsed.data) : null;
+  }, [tankCode, tankInputType, tankValue]);
   const liveResult = useMemo(
     () => calculateLocally(loadMw, fgcCount),
     [loadMw, fgcCount],
@@ -194,6 +216,26 @@ export function App() {
     setEvaluationResult(calculateLegacyEvaluation(evaluationInput));
   }
 
+  function validateTank() {
+    if (tankValue.trim() === "") {
+      setTankError("");
+      return;
+    }
+    const parsed = tankCalculationInputSchema.safeParse({
+      tankCode,
+      inputType: tankInputType,
+      value: fieldNumber(tankValue),
+    });
+    setTankError(parsed.success ? "" : (parsed.error.issues[0]?.message ?? ""));
+  }
+
+  function resetTank() {
+    setTankCode("RWT");
+    setTankInputType("LEVEL");
+    setTankValue("");
+    setTankError("");
+  }
+
   return (
     <div className="app-shell">
       <header>
@@ -204,6 +246,7 @@ export function App() {
         </div>
         <nav aria-label="Navigasi utama">
           <a href="#gas-mix">Kalkulator</a>
+          <a href="#tank">Tanki</a>
           <a href="#evaluation">Evaluasi</a>
           <a href="#modules">Modul</a>
         </nav>
@@ -221,6 +264,129 @@ export function App() {
           <div className="formula-badge">
             <span>Versi formula</span>
             <strong>{LEGACY_FORMULA_VERSION}</strong>
+          </div>
+        </section>
+
+        <section id="tank" aria-labelledby="tank-title">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">RWT &amp; MWT TANK CALCULATOR</span>
+              <h2 id="tank-title">Konversi level dan volume tanki</h2>
+            </div>
+            <span className="muted">
+              Parameter {tankDefinition.parameterVersion}
+            </span>
+          </div>
+          <div className="calculator-layout tank-layout">
+            <form
+              className="calculator-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                validateTank();
+              }}
+              noValidate
+            >
+              <label htmlFor="tank-code">Jenis tanki</label>
+              <select
+                id="tank-code"
+                value={tankCode}
+                onChange={(event) => {
+                  setTankCode(event.target.value as TankCode);
+                  setTankError("");
+                }}
+              >
+                <option value="RWT">RWT — Raw Water Tank</option>
+                <option value="MWT">MWT — Make-up Water Tank</option>
+              </select>
+              <label htmlFor="tank-input-type">Jenis input</label>
+              <select
+                id="tank-input-type"
+                value={tankInputType}
+                onChange={(event) => {
+                  setTankInputType(event.target.value as TankInputType);
+                  setTankError("");
+                }}
+              >
+                <option value="LEVEL">Level (m)</option>
+                <option value="VOLUME">Volume (m³)</option>
+              </select>
+              <label htmlFor="tank-value">
+                Nilai {tankInputType === "LEVEL" ? "level" : "volume"}{" "}
+                <span>{tankInputType === "LEVEL" ? "m" : "m³"}</span>
+              </label>
+              <input
+                id="tank-value"
+                type="number"
+                min="0"
+                step={tankInputType === "LEVEL" ? "0.001" : "0.01"}
+                value={tankValue}
+                onChange={(event) => {
+                  setTankValue(event.target.value);
+                  setTankError("");
+                }}
+                onBlur={validateTank}
+                aria-invalid={Boolean(tankError)}
+              />
+              {tankError && <p className="field-error">{tankError}</p>}
+              <div className="form-actions">
+                <button type="submit">Hitung</button>
+                <button
+                  type="button"
+                  className="reset-action"
+                  onClick={resetTank}
+                >
+                  Reset
+                </button>
+              </div>
+            </form>
+            <div className="result-panel" aria-live="polite">
+              <div className="tank-markers">
+                <span>NWL {numberFormat.format(tankDefinition.nwlM)} m</span>
+                <span>HWI {numberFormat.format(tankDefinition.hwiM)} m</span>
+                <span>OFL {numberFormat.format(tankDefinition.oflM)} m</span>
+              </div>
+              <div
+                className="tank-gauge"
+                aria-label="Posisi level terhadap OFL"
+              >
+                <span
+                  className={`tank-gauge-fill ${tankResult?.status.toLowerCase() ?? "normal"}`}
+                  style={{
+                    width: `${Math.min(100, Math.max(0, tankResult?.oflPercent ?? 0))}%`,
+                  }}
+                />
+              </div>
+              <div className="result-grid tank-metrics">
+                {(
+                  [
+                    ["Level", tankResult?.levelM, "m"],
+                    ["Level", tankResult?.levelMm, "mm"],
+                    ["Volume", tankResult?.volumeM3, "m³"],
+                    ["Volume", tankResult?.volumeLiter, "liter"],
+                    ["Kapasitas NWL", tankResult?.capacityPercent, "%"],
+                  ] as ResultMetric[]
+                ).map(([label, value, unit]) => (
+                  <article key={`${label}-${unit}`}>
+                    <span>{label}</span>
+                    <strong>
+                      {value === undefined ? "—" : numberFormat.format(value)}
+                    </strong>
+                    <small>{unit}</small>
+                  </article>
+                ))}
+              </div>
+              <p
+                className={`tank-status ${tankResult?.status.toLowerCase() ?? "idle"}`}
+              >
+                Status: {tankResult?.status ?? "—"}
+              </p>
+              {tankResult?.overflowWarning && (
+                <p className="overflow-warning" role="alert">
+                  Peringatan: level mencapai atau melebihi OFL{" "}
+                  {numberFormat.format(tankDefinition.oflM)} m. Risiko overflow.
+                </p>
+              )}
+            </div>
           </div>
         </section>
 
@@ -446,7 +612,11 @@ export function App() {
             {modules.map((name, index) => (
               <article
                 key={name}
-                className={index === 0 || index === 5 ? "active-module" : ""}
+                className={
+                  index === 0 || index === 1 || index === 5
+                    ? "active-module"
+                    : ""
+                }
               >
                 <span className="number">
                   {String(index + 1).padStart(2, "0")}
@@ -455,12 +625,14 @@ export function App() {
                 <p>
                   {index === 0
                     ? "GAS-01 hingga GAS-05 tersedia untuk pengujian awal."
-                    : index === 5
-                      ? "EVAL-01 hingga EVAL-04 tersedia untuk evaluasi interaktif."
-                      : "Fondasi modul siap untuk implementasi requirement berikutnya."}
+                    : index === 1
+                      ? "TANK-01 hingga TANK-06 tersedia untuk konversi dan monitoring batas."
+                      : index === 5
+                        ? "EVAL-01 hingga EVAL-04 tersedia untuk evaluasi interaktif."
+                        : "Fondasi modul siap untuk implementasi requirement berikutnya."}
                 </p>
                 <span className="coming">
-                  {index === 0 || index === 5
+                  {index === 0 || index === 1 || index === 5
                     ? "Tahap aktif"
                     : "Dalam pengembangan"}
                 </span>
