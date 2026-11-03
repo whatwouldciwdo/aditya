@@ -1,0 +1,28 @@
+{
+  "name": "@aditya/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "cross-env API_PORT=3131 tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@aditya/shared-types": "workspace:*",
+    "@nestjs/common": "12.3.2",
+    "@nestjs/core": "12.3.2",
+    "@nestjs/platform-fastify": "12.3.2",
+    "@fastify/static": "10.1.8",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.0",
+    "cross-env": "10.1.0",
+    "tsx": "4.21.0",
+    "typescript": "7.0.2"
+  }
+}

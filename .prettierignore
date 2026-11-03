@@ -1,0 +1,7 @@
+ADITYA_Simulasi Kalkulator (1).html
+docs/PRD.md
+node_modules
+dist
+coverage
+packages/database/drizzle
+pnpm-lock.yaml
