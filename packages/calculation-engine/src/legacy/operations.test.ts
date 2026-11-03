@@ -7,6 +7,7 @@ import {
   calculateSimulation,
   NOMINATION_SLOTS,
   OPERATION_SLOTS,
+  ROH_SLOTS,
 } from "./operations.js";
 
 describe("legacy operation calculations", () => {
@@ -55,18 +56,45 @@ describe("legacy operation calculations", () => {
   it("calculates ROH own-use deductions and gas split", () => {
     const result = calculateRoh({
       ownUseUnit: "GT11",
-      rows: OPERATION_SLOTS.map((_, index) => ({
+      rows: ROH_SLOTS.map((_, index) => ({
         gt11OpenMw: index === 0 ? 100 : 0,
         gt12OpenMw: index === 0 ? 90 : 0,
-        stMw: index === 0 ? 30 : 0,
         gt11CombinedMw: 0,
         gt12CombinedMw: 0,
         fgcCount: index === 0 ? 2 : 0,
       })),
     });
-    expect(result.rows[0]!.totalLoadMw).toBe(209);
+    expect(result.rows).toHaveLength(48);
+    expect(result.rows[0]).toMatchObject({
+      slot: "00:30",
+      gt11OpenNetMw: 99,
+      gt12OpenNetMw: 89,
+      stNetMw: 0,
+      totalLoadMw: 188,
+    });
     expect(result.rows[0]!.pgnBbtud).toBe(28.118);
     expect(result.rows[0]!.totalGasBbtud).toBeGreaterThan(0);
+  });
+
+  it("derives ROH steam-turbine netto from combined-cycle load", () => {
+    const result = calculateRoh({
+      ownUseUnit: "GT11",
+      nominationPheBbtud: 1,
+      rows: ROH_SLOTS.map((_, index) => ({
+        gt11OpenMw: 0,
+        gt12OpenMw: 0,
+        gt11CombinedMw: index === 0 ? 100 : 0,
+        gt12CombinedMw: index === 0 ? 90 : 0,
+        fgcCount: 0 as const,
+      })),
+    });
+    expect(result.rows[0]).toMatchObject({
+      stNetMw: 102.6,
+      gt11CombinedNetMw: 90,
+      gt12CombinedNetMw: 89,
+      totalLoadMw: 281.6,
+    });
+    expect(result.nominationWarnings.phe).toBe(true);
   });
 
   it("calculates nomination forecast totals", () => {

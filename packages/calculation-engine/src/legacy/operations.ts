@@ -17,6 +17,11 @@ export const OPERATION_SLOTS = Array.from(
   (_, index) => `${String((index + 1) % 24).padStart(2, "0")}:00`,
 );
 
+export const ROH_SLOTS = Array.from({ length: 48 }, (_, index) => {
+  const hour = Math.floor(index / 2) + (index % 2);
+  return `${String(hour).padStart(2, "0")}:${index % 2 === 0 ? "30" : "00"}`;
+});
+
 export const NOMINATION_SLOTS = Array.from(
   { length: 24 },
   (_, index) => `${String(index).padStart(2, "0")}:00`,
@@ -90,10 +95,16 @@ export function calculateSimulation(input: SimulationInput): SimulationResult {
 export function calculateRoh(input: RohInput): RohResult {
   const rows = input.rows.map((row, index) => {
     const ownUse = input.ownUseUnit;
-    const oc11 = Math.max(0, row.gt11OpenMw - (ownUse === "GT11" ? 8 : 1));
-    const oc12 = Math.max(0, row.gt12OpenMw - (ownUse === "GT12" ? 8 : 1));
-    const st = row.stMw > 0 ? row.stMw - 2 : 0;
+    const oc11 = Math.max(0, row.gt11OpenMw > 0 ? row.gt11OpenMw - 1 : 0);
+    const oc12 = Math.max(0, row.gt12OpenMw > 0 ? row.gt12OpenMw - 1 : 0);
     const both = row.gt11CombinedMw > 0 && row.gt12CombinedMw > 0;
+    const st = both
+      ? 0.54 * row.gt11CombinedMw + 0.54 * row.gt12CombinedMw
+      : row.gt12CombinedMw > 0
+        ? 0.4696 * row.gt12CombinedMw + 6.4904
+        : row.gt11CombinedMw > 0
+          ? 0.4696 * row.gt11CombinedMw + 6.4904
+          : 0;
     const cc11 = Math.max(
       0,
       row.gt11CombinedMw - (ownUse === "GT11" ? (both ? 10 : 8) : 1),
@@ -110,8 +121,13 @@ export function calculateRoh(input: RohInput): RohResult {
       (load12 > 0 ? calculateLegacyGasMix(load12, 0).totalGasBbtud : 0);
     const pgnBbtud = pgnEnergy(row.fgcCount);
     return {
-      slot: OPERATION_SLOTS[index] ?? `${index + 1}`,
+      slot: ROH_SLOTS[index] ?? `${index + 1}`,
       ...row,
+      gt11OpenNetMw: round(oc11),
+      gt12OpenNetMw: round(oc12),
+      stNetMw: round(st),
+      gt11CombinedNetMw: round(cc11),
+      gt12CombinedNetMw: round(cc12),
       totalLoadMw: round(totalLoadMw),
       pheBbtud: round(totalGasBbtud - pgnBbtud),
       pgnBbtud: round(pgnBbtud),
@@ -126,6 +142,14 @@ export function calculateRoh(input: RohInput): RohResult {
     averagePheBbtud: avg("pheBbtud"),
     averagePgnBbtud: avg("pgnBbtud"),
     averageTotalGasBbtud: avg("totalGasBbtud"),
+    nominationWarnings: {
+      phe:
+        input.nominationPheBbtud != null &&
+        avg("pheBbtud") > input.nominationPheBbtud,
+      pgn:
+        input.nominationPgnBbtud != null &&
+        avg("pgnBbtud") > input.nominationPgnBbtud,
+    },
   };
 }
 

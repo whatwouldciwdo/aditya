@@ -137,10 +137,11 @@ export interface SimulationResult {
 }
 export interface RohInput {
   ownUseUnit: "GT11" | "GT12";
+  nominationPheBbtud?: number;
+  nominationPgnBbtud?: number;
   rows: Array<{
     gt11OpenMw: number;
     gt12OpenMw: number;
-    stMw: number;
     gt11CombinedMw: number;
     gt12CombinedMw: number;
     fgcCount: 0 | 1 | 2 | 3 | 4;
@@ -151,6 +152,11 @@ export interface RohResult {
   rows: Array<
     RohInput["rows"][number] & {
       slot: string;
+      gt11OpenNetMw: number;
+      gt12OpenNetMw: number;
+      stNetMw: number;
+      gt11CombinedNetMw: number;
+      gt12CombinedNetMw: number;
       totalLoadMw: number;
       pheBbtud: number;
       pgnBbtud: number;
@@ -160,6 +166,7 @@ export interface RohResult {
   averagePheBbtud: number;
   averagePgnBbtud: number;
   averageTotalGasBbtud: number;
+  nominationWarnings: { phe: boolean; pgn: boolean };
 }
 export interface NominationInput {
   submissionDate: string;
