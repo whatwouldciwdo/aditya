@@ -26,21 +26,9 @@ if (process.env.NODE_ENV === "production") {
     root: resolve(currentDirectory, "../../web/dist"),
     prefix: "/",
   });
-
-  app
-    .getHttpAdapter()
-    .getInstance()
-    .setNotFoundHandler((request, reply) => {
-      if (request.url.startsWith("/api/")) {
-        return reply.status(404).send({
-          statusCode: 404,
-          error: "Not Found",
-          message: `Cannot ${request.method} ${request.url}`,
-        });
-      }
-
-      return reply.sendFile("index.html");
-    });
+  app.getHttpAdapter().getInstance().get("/workspace/*", (_, reply) => {
+    return reply.sendFile("index.html");
+  });
 }
 
 app.enableShutdownHooks();
