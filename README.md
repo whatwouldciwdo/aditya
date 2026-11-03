@@ -96,6 +96,8 @@ Jika server memakai runtime container terbatas, Compose ini sengaja tidak menggu
 
 Image juga menggunakan biner `node` sebagai entrypoint langsung sehingga tidak bergantung pada shell script `/usr/local/bin/docker-entrypoint.sh` bawaan base image.
 
+Compose tidak memaksakan `no-new-privileges` karena opsi tersebut tidak kompatibel dengan kebijakan container runtime pada sebagian host. Container tetap berjalan sebagai user non-root `node` yang ditetapkan di dalam image.
+
 ## Quality checks
 
 ```bash
