@@ -50,7 +50,7 @@ chmod 600 /opt/aditya/.env
 cd /opt/aditya
 git pull --ff-only origin main
 docker compose -f compose.production.yml build --pull
-docker compose -f compose.production.yml run --rm --no-deps aditya pnpm db:migrate
+docker compose -f compose.production.yml run --rm --no-deps aditya node_modules/.pnpm/tsx@4.21.0/node_modules/tsx/dist/cli.mjs packages/database/src/migrate.ts
 docker compose -f compose.production.yml up -d
 docker compose -f compose.production.yml ps
 ```
@@ -69,7 +69,7 @@ curl --fail --show-error --head http://127.0.0.1:3130/
 cd /opt/aditya
 git pull --ff-only origin main
 docker compose -f compose.production.yml build --pull
-docker compose -f compose.production.yml run --rm --no-deps aditya pnpm db:migrate
+docker compose -f compose.production.yml run --rm --no-deps aditya node_modules/.pnpm/tsx@4.21.0/node_modules/tsx/dist/cli.mjs packages/database/src/migrate.ts
 docker compose -f compose.production.yml up -d --remove-orphans
 docker compose -f compose.production.yml ps
 curl --fail --show-error http://127.0.0.1:3130/api/health
@@ -93,6 +93,8 @@ docker compose -f compose.production.yml down
 Jangan menjalankan systemd service Node dan container secara bersamaan karena keduanya akan menggunakan port `3130`.
 
 Jika server memakai runtime container terbatas, Compose ini sengaja tidak menggunakan `init: true`. NestJS sudah mengaktifkan shutdown hooks sehingga container tetap dapat menerima sinyal berhenti secara langsung tanpa `/sbin/docker-init`.
+
+Image juga menggunakan biner `node` sebagai entrypoint langsung sehingga tidak bergantung pada shell script `/usr/local/bin/docker-entrypoint.sh` bawaan base image.
 
 ## Quality checks
 

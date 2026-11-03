@@ -26,16 +26,13 @@ RUN pnpm build
 
 FROM node:24-bookworm-slim AS runtime
 
-ARG PNPM_VERSION=12.16.1
-
 ENV NODE_ENV=production \
     API_PORT=3130
 
 WORKDIR /app
 
-# pnpm dan source migration dipertahankan agar migration dapat dijalankan
-# melalui container yang sama sebelum aplikasi diperbarui.
-RUN npm install --global "pnpm@${PNPM_VERSION}"
+# Source dan dependency migration dipertahankan agar migration dapat
+# dijalankan melalui container yang sama sebelum aplikasi diperbarui.
 
 COPY --from=builder --chown=node:node /app /app
 
@@ -46,4 +43,7 @@ EXPOSE 3130
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD ["node", "-e", "fetch('http://127.0.0.1:3130/api/health').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
 
-CMD ["node", "apps/api/dist/main.js"]
+# Lewati docker-entrypoint.sh bawaan image Node karena sebagian runtime
+# container terbatas tidak mengizinkan eksekusi shell script entrypoint.
+ENTRYPOINT ["node"]
+CMD ["apps/api/dist/main.js"]
