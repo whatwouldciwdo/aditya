@@ -1,0 +1,19 @@
+.git
+.github
+.env
+.env.*
+!.env.example
+
+node_modules
+**/node_modules
+dist
+**/dist
+coverage
+**/coverage
+*.tsbuildinfo
+*.log
+
+.vscode
+.DS_Store
+docs
+ADITYA_Simulasi Kalkulator (1).html

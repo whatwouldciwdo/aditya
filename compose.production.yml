@@ -1,0 +1,18 @@
+services:
+  aditya:
+    container_name: aditya
+    image: aditya:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      API_PORT: "3130"
+    ports:
+      - "${ADITYA_BIND_ADDRESS:-0.0.0.0}:${ADITYA_PORT:-3130}:3130"
+    security_opt:
+      - no-new-privileges:true

@@ -7,15 +7,15 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "build": "corepack pnpm -r build",
-    "dev": "corepack pnpm --parallel --filter @aditya/api --filter @aditya/web dev",
-    "test": "corepack pnpm -r test",
-    "typecheck": "corepack pnpm -r typecheck",
+    "build": "pnpm -r build",
+    "dev": "pnpm --parallel --filter @aditya/api --filter @aditya/web dev",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "db:generate": "corepack pnpm --filter @aditya/database db:generate",
-    "db:migrate": "corepack pnpm --filter @aditya/database db:migrate",
-    "db:studio": "corepack pnpm --filter @aditya/database db:studio"
+    "db:generate": "pnpm --filter @aditya/database db:generate",
+    "db:migrate": "pnpm --filter @aditya/database db:migrate",
+    "db:studio": "pnpm --filter @aditya/database db:studio"
   },
   "devDependencies": {
     "prettier": "3.9.10",

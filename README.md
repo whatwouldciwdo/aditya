@@ -1,37 +1,113 @@
 # ADITYA
 
-Monorepo aplikasi operasional ADITYA. Aplikasi tidak menggunakan authentication; akses wajib dibatasi pada tingkat jaringan/infrastruktur.
+Monorepo aplikasi operasional ADITYA. Aplikasi tidak menggunakan autentikasi; akses wajib dibatasi pada tingkat jaringan/infrastruktur.
 
-## Prasyarat
+## Endpoint
 
-- Node.js 24+
-- Corepack (gunakan `corepack pnpm` jika shim global pnpm belum diaktifkan)
-- Docker Desktop
+- Web: `http://localhost:3130/`
+- API health: `http://localhost:3130/api/health`
+- API readiness: `http://localhost:3130/api/ready`
 
-## Menjalankan development
+NestJS/Fastify melayani hasil build React pada `/` dan API pada `/api` melalui satu port `3130`.
+
+## Development lokal
+
+Prasyarat: Node.js 24+, pnpm 12.16.1, dan Docker Desktop untuk PostgreSQL lokal.
 
 ```powershell
 Copy-Item .env.example .env
 docker compose up -d postgres
-corepack pnpm install
-corepack pnpm db:migrate
-corepack pnpm dev
+pnpm install --frozen-lockfile
+pnpm db:migrate
+pnpm dev
 ```
 
-- Web: http://localhost:3130
-- API health: http://localhost:3130/api/health
+Dalam development, Vite berjalan pada port `3130` dan meneruskan `/api` ke API internal pada `127.0.0.1:3131`.
 
-Pada development, Vite menjadi entry point port `3130` dan meneruskan `/api` ke API internal port `3131`.
+## Production: satu container aplikasi
 
-## Menjalankan production build secara lokal
+`compose.production.yml` menjalankan satu container yang berisi Web dan API. PostgreSQL tidak dibuat oleh Compose production karena database berada pada server terpusat.
+
+### Konfigurasi server
+
+Buat `/opt/aditya/.env` dan jangan commit file tersebut:
+
+```dotenv
+DATABASE_URL=postgresql://USER:PASSWORD_URL_ENCODED@HOST:5432/aditya
+ADITYA_BIND_ADDRESS=0.0.0.0
+ADITYA_PORT=3130
+```
+
+Gunakan `127.0.0.1` sebagai `ADITYA_BIND_ADDRESS` jika akses hanya melalui reverse proxy pada host yang sama. Password dalam URL harus di-URL-encode bila mengandung karakter khusus.
+
+```bash
+chmod 600 /opt/aditya/.env
+```
+
+### Deploy pertama
+
+```bash
+cd /opt/aditya
+git pull --ff-only origin main
+docker compose -f compose.production.yml build --pull
+docker compose -f compose.production.yml run --rm --no-deps aditya pnpm db:migrate
+docker compose -f compose.production.yml up -d
+docker compose -f compose.production.yml ps
+```
+
+Verifikasi:
+
+```bash
+docker compose -f compose.production.yml logs --tail=100 aditya
+curl --fail --show-error http://127.0.0.1:3130/api/health
+curl --fail --show-error --head http://127.0.0.1:3130/
+```
+
+### Update berikutnya
+
+```bash
+cd /opt/aditya
+git pull --ff-only origin main
+docker compose -f compose.production.yml build --pull
+docker compose -f compose.production.yml run --rm --no-deps aditya pnpm db:migrate
+docker compose -f compose.production.yml up -d --remove-orphans
+docker compose -f compose.production.yml ps
+curl --fail --show-error http://127.0.0.1:3130/api/health
+```
+
+Migration dijalankan sebelum container aplikasi diganti. Migration Drizzle bersifat idempotent: migration yang sudah tercatat tidak dijalankan ulang.
+
+### Perintah operasional
+
+```bash
+# Log real-time
+docker compose -f compose.production.yml logs -f aditya
+
+# Restart
+docker compose -f compose.production.yml restart aditya
+
+# Stop dan hapus container (database terpusat tidak terpengaruh)
+docker compose -f compose.production.yml down
+```
+
+Jangan menjalankan systemd service Node dan container secara bersamaan karena keduanya akan menggunakan port `3130`.
+
+## Quality checks
+
+```bash
+pnpm typecheck
+pnpm test
+pnpm build
+pnpm format:check
+```
+
+Pada Windows yang belum memiliki shim global pnpm, jalankan workspace check secara langsung:
 
 ```powershell
-corepack pnpm build
-$env:NODE_ENV = "production"
-$env:API_PORT = "3130"
-corepack pnpm --filter @aditya/api start
+corepack pnpm -r typecheck
+corepack pnpm -r test
+corepack pnpm -r build
+corepack pnpm format:check
 ```
 
-NestJS/Fastify melayani web pada `/` dan API pada `/api` melalui satu port `3130`.
-
-Jangan gunakan credential development pada staging/production.
+Jangan gunakan credential development pada staging/production dan jangan membuka port `3130` ke internet publik.
